@@ -1,0 +1,39 @@
+version: '3'
+
+services:
+  gateway:
+    build:
+      context: nginx
+    container_name: gateway
+    tty: true
+    ports:
+      - "8080:80"
+    depends_on:
+      - app
+
+  app:
+    build: 
+      context: app
+    container_name: app
+    tty: true
+    entrypoint: >
+      sh -c "dockerize -wait tcp://db:3306 -timeout 40s &&
+             npm install && node index.js"
+    volumes:
+      - ./app:/usr/src/app
+    depends_on:
+      - db
+
+  db:
+    image: mysql:5.7
+    container_name: db
+    restart: always
+    tty: true
+    volumes:
+      - ./mysql:/var/lib/mysql
+    environment:
+      MYSQL_DATABASE: nodedb
+      MYSQL_PASSWORD: root
+      MYSQL_ROOT_PASSWORD: root
+    ports:
+      - "3306"
